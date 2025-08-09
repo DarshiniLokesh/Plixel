@@ -36,23 +36,47 @@ export default function HomePage() {
     if (!blockchain) return;
     alert(blockchain.isChainValid() ? "✅ Valid Chain" : "❌ Invalid Chain");
   };
+  const tamperWithChain = () => {
+    if (!blockchain) return;
+    // Tamper with data of block 1 (if it exists)
+    if (blockchain.chain.length > 1) {
+      blockchain.chain[1].data = { amount: 9999 };
+      setChainData([...blockchain.chain]); // update UI
+      alert("🛠 Chain has been tampered for testing!");
+    } else {
+      alert("No block to tamper with yet!");
+    }
+  };
 
+  
   return (
     <div style={{ padding: "2rem" }}>
       <h1>🚀 Plixel Blockchain</h1>
-      <input
-        type="number"
-        value={inputAmount}
-        onChange={(e) => setInputAmount(e.target.value)}
-        disabled={mining || !blockchain}
-      />
-      <button onClick={mineNewBlock} disabled={mining || !blockchain}>
-        {mining ? "Mining..." : "Mine Block"}
-      </button>
-      <button onClick={validateChain} disabled={!blockchain}>
-        Validate Chain
-      </button>
-      <pre>{JSON.stringify(chainData, null, 2)}</pre>
+
+      <div style={{ marginBottom: "1rem" }}>
+        <input
+          type="number"
+          value={inputAmount}
+          onChange={(e) => setInputAmount(e.target.value)}
+          placeholder="Enter amount"
+          disabled={mining || !blockchain}
+        />
+        <button onClick={mineNewBlock} disabled={mining || !blockchain} style={{ marginLeft: "0.5rem" }}>
+          {mining ? "⛏️ Mining..." : "Mine Block"}
+        </button>
+        <button onClick={validateChain} style={{ marginLeft: "0.5rem" }}>
+          Validate Chain
+        </button>
+        {/* NEW BUTTON */}
+        <button onClick={tamperWithChain} style={{ marginLeft: "0.5rem", backgroundColor: "#f55", color: "#fff" }}>
+          🛠 Tamper Chain
+        </button>
+      </div>
+
+      <h2>Blockchain Data</h2>
+      <pre style={{ background: "#eee", padding: "1rem", maxHeight: "400px", overflow: "auto" }}>
+        {JSON.stringify(chainData, null, 2)}
+      </pre>
     </div>
   );
 }
