@@ -1,3 +1,5 @@
+import * as crypto from "crypto";
+
 export class Block {
     index: number;
     timestamp: number;
@@ -17,11 +19,25 @@ export class Block {
   
     calculateHash(): string {
      
-      return "";
+      return crypto
+      .createHash("sha256")
+      .update(
+        this.index + 
+        this.previousHash +
+        this.timestamp + 
+        JSON.stringify(this.data) + 
+        this.nonce
+      )
+      .digest("hex");
     }
   
     mineBlock(difficulty: number): void {
-  
+
+        while(this.hash.substring(0,difficulty) !== Array(difficulty + 1).join("0")){
+            this.nonce++;
+            this.hash = this.calculateHash();
+        }
+        console.log(`Block mined : ${this.hash}`);
     }
   }
   

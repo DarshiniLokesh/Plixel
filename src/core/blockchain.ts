@@ -16,7 +16,31 @@ export class Blockchain{
         return this.chain[this.chain.length-1];
     }
     addBlock(newBlock:Block):boolean{
-        // Implementation needed
-        return false;
+        newBlock.previousHash = this.getLatestBlock().hash;
+        newBlock.mineBlock(this.difficulty);
+
+        if(this.isValidNewBlock(newBlock, this.getLatestBlock())){
+            this.chain.push(newBlock);
+            return true;
+        }else{
+            console.log("Invalid block, not added.");
+            return false;
+        }
+        
+    }
+    isValidNewBlock(newBlock:Block, previousBlock:Block):boolean{
+        if(previousBlock.index + 1 !== newBlock.index)return false;
+        if(newBlock.previousHash !== previousBlock.hash) return false;
+        if(newBlock.hash !== newBlock.calculateHash()) return false;
+        if(newBlock.hash.substring(0,this.difficulty) !== Array(this.difficulty+1).join("0"))return false;
+        return true;
+    }
+    isChainValid() : boolean{
+        for(let i =1; i<this.chain.length;i++){
+            const currentBlock = this.chain[i];
+            const prevBlock = this.chain[i-1];
+            if(!this.isValidNewBlock(currentBlock, prevBlock))return false;
+        }
+        return true;
     }
 }
