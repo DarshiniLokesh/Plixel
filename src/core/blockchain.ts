@@ -1,3 +1,4 @@
+// src/core/blockchain.ts
 import { Block } from "./block";
 import { Transaction } from "./transaction";
 
@@ -5,11 +6,13 @@ export class Blockchain {
   chain: Block[];
   difficulty: number;
   pendingTransactions: Transaction[];
+  miningReward: number;
 
   constructor() {
     this.chain = [this.createGenesisBlock()];
     this.difficulty = 2;
     this.pendingTransactions = [];
+    this.miningReward = 10;
   }
 
   createGenesisBlock(): Block {
@@ -22,11 +25,24 @@ export class Blockchain {
     return this.chain[this.chain.length - 1];
   }
 
-  addTransaction(transaction: Transaction): void {
+  addTransaction(transaction: Transaction) {
+    if (!transaction.fromAddress || !transaction.toAddress) {
+      throw new Error("Transaction must include from and to address");
+    }
+
+    if (transaction.amount <= 0) {
+      throw new Error("Transaction amount must be greater than zero");
+    }
+
+   
+    if (transaction.fromAddress !== null && this.getBalanceOfAddress(transaction.fromAddress) < transaction.amount) {
+      throw new Error("Not enough balance");
+    }
+
     this.pendingTransactions.push(transaction);
   }
 
-  minePendingTransactions(minerAddress: string): void {
+  minePendingTransactions(minerAddress: string) {
     const block = new Block(
       this.chain.length,
       this.pendingTransactions,
@@ -37,18 +53,23 @@ export class Blockchain {
 
     // Reward miner
     this.pendingTransactions = [
-      new Transaction(null, minerAddress, 10)
+      new Transaction(null, minerAddress, this.miningReward)
     ];
   }
 
-  addBlock(newBlock: Block): boolean {
-    newBlock.previousHash = this.getLatestBlock().hash;
-    if (!this.isValidNewBlock(newBlock, this.getLatestBlock())) {
-      return false;
+  getBalanceOfAddress(address: string): number {
+    let balance = 0;
+    for (const block of this.chain) {
+      for (const trans of block.transactions) {
+        if (trans.fromAddress === address) {
+          balance -= trans.amount;
+        }
+        if (trans.toAddress === address) {
+          balance += trans.amount;
+        }
+      }
     }
-    newBlock.mineBlock(this.difficulty);
-    this.chain.push(newBlock);
-    return true;
+    return balance;
   }
 
   isValidNewBlock(newBlock: Block, previousBlock: Block): boolean {

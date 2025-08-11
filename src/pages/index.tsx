@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Blockchain } from "../core/blockchain";
-import { Block } from "../core/block";
 import { Transaction } from "../core/transaction";
 
 export default function HomePage() {
@@ -11,45 +10,67 @@ export default function HomePage() {
   const [fromAddress, setFromAddress] = useState("");
   const [toAddress, setToAddress] = useState("");
 
+  // Initialize blockchain when component mounts
   useEffect(() => {
     const chain = new Blockchain();
     setBlockchain(chain);
     setChainData(chain.chain);
   }, []);
 
+  // Add a new transaction to pending list
   const addNewTransaction = () => {
-    if (!fromAddress || !toAddress || !inputAmount || !blockchain) {
-      alert("Enter from, to, and amount!");
+    if (!blockchain) return; // null safety
+
+    const amountNum = Number(inputAmount);
+    if (!fromAddress || !toAddress || amountNum <= 0) {
+      alert("Please enter a positive amount and valid addresses!");
       return;
     }
-    blockchain.addTransaction(new Transaction(fromAddress, toAddress, Number(inputAmount)));
-    setFromAddress("");
-    setToAddress("");
-    setInputAmount("");
-    alert("Transaction added to pending list!");
+
+    try {
+      blockchain.addTransaction(new Transaction(fromAddress, toAddress, amountNum));
+      setFromAddress("");
+      setToAddress("");
+      setInputAmount("");
+      setChainData([...blockchain.chain]); // refresh UI
+      alert("✅ Transaction added to pending list!");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        alert(`❌ ${err.message}`);
+      } else {
+        alert("❌ Failed to add transaction");
+      }
+    }
   };
 
+  // Mine all pending transactions
   const minePendingTx = () => {
-    if (!blockchain) return;
+    if (!blockchain) return; // null safety
     setMining(true);
+
     setTimeout(() => {
-      blockchain.minePendingTransactions("Miner1");
-      setChainData([...blockchain.chain]);
+      blockchain.minePendingTransactions("Miner1"); // you can make this dynamic
+      setChainData([...blockchain.chain]); // refresh UI
       setMining(false);
+      alert("⛏️ Mining complete! Reward added to pending tx.");
     }, 50);
   };
 
+  // Validate chain
   const validateChain = () => {
     if (!blockchain) return;
-    alert(blockchain.isChainValid() ? "✅ Valid Chain" : "❌ Invalid Chain");
+    alert(blockchain.isChainValid() ? "✅ Blockchain is valid" : "❌ Blockchain is INVALID!");
   };
 
+  // Tamper with chain for demo
   const tamperWithChain = () => {
     if (!blockchain) return;
     if (blockchain.chain.length > 1) {
-      blockchain.chain[1].transactions = [new Transaction("Hacker", "Bob", 9999)];
+      blockchain.chain[1].transactions = [
+        new Transaction("Hacker", "Bob", 9999)
+      ];
       setChainData([...blockchain.chain]);
-      alert("🛠 Chain has been tampered!");
+      alert("💀 Chain has been tampered!");
     } else {
       alert("No block to tamper with yet!");
     }
@@ -76,17 +97,32 @@ export default function HomePage() {
         value={inputAmount}
         onChange={(e) => setInputAmount(e.target.value)}
       />
-      <button onClick={addNewTransaction}>Add Transaction</button>
+      <button
+        onClick={addNewTransaction}
+        disabled={!blockchain || mining}
+      >
+        Add Transaction
+      </button>
 
       <div style={{ marginTop: "1rem" }}>
-        <button onClick={minePendingTx} disabled={mining}>
+        <button
+          onClick={minePendingTx}
+          disabled={!blockchain || mining}
+        >
           {mining ? "⛏️ Mining..." : "Mine Pending Transactions"}
         </button>
-        <button onClick={validateChain} style={{ marginLeft: "0.5rem" }}>
+
+        <button
+          onClick={validateChain}
+          disabled={!blockchain}
+          style={{ marginLeft: "0.5rem" }}
+        >
           Validate Chain
         </button>
+
         <button
           onClick={tamperWithChain}
+          disabled={!blockchain}
           style={{ marginLeft: "0.5rem", backgroundColor: "#f55", color: "#fff" }}
         >
           🛠 Tamper Chain
@@ -94,7 +130,14 @@ export default function HomePage() {
       </div>
 
       <h2>Blockchain Data</h2>
-      <pre style={{ background: "#eee", padding: "1rem", maxHeight: "400px", overflow: "auto" }}>
+      <pre
+        style={{
+          background: "#eee",
+          padding: "1rem",
+          maxHeight: "400px",
+          overflow: "auto"
+        }}
+      >
         {JSON.stringify(chainData, null, 2)}
       </pre>
     </div>
