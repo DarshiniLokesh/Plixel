@@ -1,9 +1,12 @@
-// Transaction model
+
 export class Transaction {
-    constructor(
-      public fromAddress: string | null, 
-      public toAddress: string,
-      public amount: number
-    ) {}
+  fromAddress: string | null;
+  toAddress: string;
+  amount: number;
+
+  constructor(fromAddress: string | null, toAddress: string, amount: number) {
+    this.fromAddress = fromAddress;
+    this.toAddress = toAddress;
+    this.amount = amount;
   }
-  
+}
